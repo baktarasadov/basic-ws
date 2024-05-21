@@ -73,7 +73,7 @@ app.patch("/:id", async (req, res) => {
         .status(404)
         .json({ data: null, succes: false, message: "User not found" });
     }
-    const updatedUser = (users[user] = req.body);
+    const updatedUser = (users[user] = { ...req.body, ...users[user] });
     res.status(200).json({
       data: updatedUser,
       succes: true,
