@@ -28,13 +28,11 @@ const validatePostData = async (req, res, next) => {
 app.post("/", validatePostData, async (req, res) => {
   try {
     const user = users.push({ ...req.body, id: users.length + 1 });
-    res
-      .status(201)
-      .json({
-        data: { ...req.body, id: users.length + 1 },
-        succes: true,
-        message: "User Create Success",
-      }); // Yeni bir kullanıcı oluştur
+    res.status(201).json({
+      data: { ...req.body, id: users.length },
+      succes: true,
+      message: "User Create Success",
+    }); // Yeni bir kullanıcı oluştur
   } catch (error) {
     res.status(400).json({ message: error.message }); // Hata durumunda hata mesajını gönder
   }
