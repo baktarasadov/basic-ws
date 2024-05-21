@@ -6,14 +6,10 @@ const bodyParser = require("body-parser");
 const port = 3000;
 const router = express.Router();
 const User = require("./model"); // User modelini dahil edin
-const createDbConnection = require("./db");
 const userSchema = require("./validation");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-(async () => {
-  await createDbConnection();
-})();
-
+let users = [];
 // POST işlemi için Joi şema doğrulama middleware'i
 const validatePostData = async (req, res, next) => {
   try {
@@ -31,7 +27,7 @@ const validatePostData = async (req, res, next) => {
 // CREATE (POST) işlemi
 app.post("/", validatePostData, async (req, res) => {
   try {
-    const user = await User.create(req.body);
+    const user = users.push({ ...req.body, id: users.length + 1 });
     res
       .status(201)
       .json({ data: user, succes: true, message: "User Create Success" }); // Yeni bir kullanıcı oluştur
@@ -43,7 +39,6 @@ app.post("/", validatePostData, async (req, res) => {
 // READ (GET) işlemi - Tüm kullanıcıları al
 app.get("/", async (req, res) => {
   try {
-    const users = await User.find(); // Tüm kullanıcıları bul
     res
       .status(200)
       .json({ data: users, succes: true, message: "User List Success" }); // Kullanıcıları yanıt olarak gönder
@@ -55,7 +50,7 @@ app.get("/", async (req, res) => {
 // READ (GET) işlemi - Belirli bir kullanıcıyı al
 app.get("/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id); // Kullanıcıyı id'ye göre bul
+    const user = users.find((data) => data.id == req.params.id); // Kullanıcıyı id'ye göre bul
     if (user == null) {
       return res
         .status(404)
@@ -72,15 +67,13 @@ app.get("/:id", async (req, res) => {
 // UPDATE (PUT) işlemi
 app.patch("/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id); // Kullanıcıyı id'ye göre bul
-    if (user == null) {
+    const user = users.findIndex((data) => data.id == req.params.id); // Kullanıcıyı id'ye göre bul
+    if (user == -1) {
       return res
         .status(404)
         .json({ data: null, succes: false, message: "User not found" });
     }
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    }); // Kullanıcıyı güncelle
+    const updatedUser = (users[user] = req.body);
     res.status(200).json({
       data: updatedUser,
       succes: true,
@@ -94,13 +87,14 @@ app.patch("/:id", async (req, res) => {
 // DELETE işlemi
 app.delete("/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id); // Kullanıcıyı id'ye göre bul
+    const user = users.filter((data) => data.id != req.params.id); // Kullanıcıyı id'ye göre bul
+
     if (user == null) {
       return res
         .status(404)
         .json({ data: null, succes: false, message: "User not found" });
     }
-    await User.deleteOne({ _id: req.params.id }); // Kullanıcıyı sil
+
     res
       .status(200)
       .json({ data: null, succes: true, message: "User Remove Success" });
